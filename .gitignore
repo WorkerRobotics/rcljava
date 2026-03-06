@@ -9,3 +9,5 @@ target/
 scripts/src
 scripts/jextract-*
 scripts/pom.xml
+
+settings.xml
