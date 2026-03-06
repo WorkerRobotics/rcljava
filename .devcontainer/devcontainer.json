@@ -1,0 +1,33 @@
+{
+  "name": "ROS 2 Jazzy + Temurin JDK 25 (rcljava)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-iot.vscode-ros",
+        "redhat.java",
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-maven"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-25",
+            "path": "/opt/java/openjdk",
+            "default": true
+          }
+        ],
+        "java.jdt.ls.java.home": "/opt/java/openjdk",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "runArgs": [
+    "--network=host",
+    "--privileged"
+  ],
+  "remoteUser": "root",
+  "postCreateCommand": "bash -lc 'source /opt/ros/jazzy/setup.bash && mvn -q -DskipTests package || true'"
+}

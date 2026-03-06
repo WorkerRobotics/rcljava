@@ -1,0 +1,27 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.workerrobotics.rcljava</groupId>
+    <artifactId>rcljava-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>rcljava-ffi</artifactId>
+  <name>rcljava-ffi</name>
+
+  <dependencies>
+    <!--
+      Depends on your jextract-generated bindings. Edit the coordinates in the parent pom properties:
+        ros.bindings.groupId / ros.bindings.artifactId / ros.bindings.version
+    -->
+    <dependency>
+      <groupId>${ros.bindings.groupId}</groupId>
+      <artifactId>${ros.bindings.artifactId}</artifactId>
+      <version>${ros.bindings.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>

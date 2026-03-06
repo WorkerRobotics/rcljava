@@ -1,0 +1,11 @@
+target/
+**/target/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.continue/
+
+scripts/src
+scripts/jextract-*
+scripts/pom.xml

@@ -1,0 +1,140 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.workerrobotics.rcljava</groupId>
+  <artifactId>rcljava-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>rcljava</name>
+
+  <modules>
+    <module>rcljava-loader</module>
+    <module>rcljava-ffi</module>
+    <module>rcljava-core</module>
+    <module>rcljava-examples</module>
+  </modules>
+
+  <properties>
+      <maven.compiler.release>25</maven.compiler.release>
+
+      <!-- jextract-generated ROS 2 Java bindings -->
+      <ros.bindings.groupId>com.github.WorkerRobotics</ros.bindings.groupId>
+      <ros.bindings.artifactId>ros2-java-bindings-jazzy</ros.bindings.artifactId>
+      <ros.bindings.version>25.0.22</ros.bindings.version>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <surefire.useFile>false</surefire.useFile>
+      <argLine></argLine>
+
+      <mockito.version>5.22.0</mockito.version>
+      <junit.jupiter.version>5.11.4</junit.jupiter.version>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${ros.bindings.groupId}</groupId>
+        <artifactId>${ros.bindings.artifactId}</artifactId>
+        <version>${ros.bindings.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <scope>test</scope>
+        <version>${junit.jupiter.version}</version>
+      </dependency>
+      <!-- Source: https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+      <dependency>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-core</artifactId>
+          <version>${mockito.version}</version>
+          <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.14</version>
+          <executions>
+              <execution>
+                  <goals>
+                      <goal>prepare-agent</goal>
+                  </goals>
+              </execution>
+              <execution>
+                  <id>report</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                      <goal>report</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+          <configuration>
+            <useSystemClassLoader>true</useSystemClassLoader>
+            <useModulePath>false</useModulePath>
+
+            <argLine>@{argLine} --enable-native-access=ALL-UNNAMED -Djava.library.path=/opt/ros/jazzy/lib</argLine>
+            <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+            <redirectTestOutputToFile>false</redirectTestOutputToFile>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.5.2</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.14</version>
+          <executions>
+              <execution>
+                  <goals>
+                      <goal>prepare-agent</goal>
+                  </goals>
+              </execution>
+              <execution>
+                  <id>report</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                      <goal>report</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <!-- <repositories>
+    <repository>
+        <id>github-workerrobotics</id>
+        <url>https://maven.pkg.github.com/WorkerRobotics/ros-rcl-java-bindings</url>
+    </repository>
+  </repositories> -->
+</project>
