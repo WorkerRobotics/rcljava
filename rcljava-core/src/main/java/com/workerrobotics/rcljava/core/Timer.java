@@ -1,5 +1,7 @@
 package com.workerrobotics.rcljava.core;
 
+import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
+
 import org.ros2.rcl.RclLib;
 import java.lang.foreign.MemorySegment;
 import java.util.function.Consumer;
@@ -20,6 +22,7 @@ public class Timer implements AutoCloseable {
     private final MemorySegment handle;
     private final Node node;
     private final Consumer<Timer> callback;
+    private final CallbackGroup callbackGroup;
     private final long periodNanoseconds;
 
     /**
@@ -35,9 +38,10 @@ public class Timer implements AutoCloseable {
      *                 The function receives the timer instance as an argument.
      * @throws com.workerrobotics.rcljava.ffi.RclException If the native {@code rcl_timer_init} call fails.
      */
-    public Timer(Node node, long periodNanoseconds, Consumer<Timer> callback) {
+    public Timer(Node node, long periodNanoseconds, Consumer<Timer> callback, CallbackGroup callbackGroup) {
         this.node = node;
         this.callback = callback;
+        this.callbackGroup = callbackGroup;
         this.periodNanoseconds = periodNanoseconds;
 
         this.handle = RclLib.rcl_get_zero_initialized_timer(node.nodeArena);
@@ -68,6 +72,9 @@ public class Timer implements AutoCloseable {
      * @return A {@link Consumer} representing the function executed upon timer expiry.
      */
     public Consumer<Timer> callback() { return callback; }
+
+    /** @return The {@link CallbackGroup} applied to this Timer. */
+    public CallbackGroup callbackGroup() {return this.callbackGroup;}
 
     /**
      * Finalizes the native timer and releases associated resources.

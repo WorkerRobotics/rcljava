@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import org.ros2.rcl.RclLib;
 import org.ros2.rcl.rmw_request_id_t;
 
+import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 import com.workerrobotics.rcljava.core.service.ServiceType;
 import com.workerrobotics.rcljava.ffi.NativeChecks;
 import com.workerrobotics.rcljava.loader.RosLoader;
@@ -34,7 +35,7 @@ public class Client<T_Req, T_Res> implements AutoCloseable {
     private final MemorySegment handle;
     private final Node node;
     private final ServiceType<T_Req, T_Res> serviceType;
-    private final Consumer<MemorySegment> callback;
+    private final CallbackGroup callbackGroup;
     
     /** 
      * A thread-safe map associating native sequence numbers with Java futures. 
@@ -56,10 +57,10 @@ public class Client<T_Req, T_Res> implements AutoCloseable {
      * @param callback Optional consumer for manual response handling (can be {@code null}).
      * @throws com.workerrobotics.rcljava.ffi.RclException If native initialization fails.
      */
-    public Client(Node node, String serviceName, ServiceType<T_Req, T_Res> serviceType, QoS qosProfile, Consumer<MemorySegment> callback) {
+    public Client(Node node, String serviceName, ServiceType<T_Req, T_Res> serviceType, CallbackGroup callbackGroup) {
         this.node = node;
         this.serviceType = serviceType;
-        this.callback = callback;
+        this.callbackGroup = callbackGroup;
 
         MemorySegment srvTypeSupport = getServiceTypeSupport(serviceType.getRequestClass());
         this.handle = rcl_get_zero_initialized_client(node.nodeArena);
@@ -106,6 +107,9 @@ public class Client<T_Req, T_Res> implements AutoCloseable {
 
     /** @return The {@link ServiceType} definition associated with this client. */
     public ServiceType<T_Req, T_Res> serviceType() { return serviceType; }
+
+    /** @return The {@link CallbackGroup} applied to this client */
+    public CallbackGroup callbackGroup() { return this.callbackGroup;}
 
     /**
      * Finalizes the native client and releases its handle.

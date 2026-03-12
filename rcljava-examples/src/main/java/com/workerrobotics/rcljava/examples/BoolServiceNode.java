@@ -38,7 +38,6 @@ public class BoolServiceNode extends Node {
 
     public MemorySegment createRosString(SegmentAllocator allocator, String value) {
         // Allokeer de ROS String struct
-        
         MemorySegment rosString = rosidl_runtime_c__String.allocate(allocator);
         
         // Allokeer de eigenlijke tekst in het geheugen

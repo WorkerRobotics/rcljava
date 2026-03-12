@@ -15,6 +15,7 @@ import org.ros2.rcl.msgs.GEOMETRY_MSGS_Lib;
 import org.ros2.rcl.msgs.STD_MSGS_Lib;
 import org.ros2.rcl.msgs.geometry_msgs__msg__Twist;
 
+import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 import com.workerrobotics.rcljava.core.events.EventHandler;
 import com.workerrobotics.rcljava.core.service.ServiceCallback;
 import com.workerrobotics.rcljava.ffi.NativeChecks;
@@ -140,8 +141,8 @@ public class Executor {
                 MemorySegment safeData = captureData(sub, messageArena);
 
                 if (safeData != null) {
-                //     // 2. Geef de veilige kopie door aan de Virtual Thread
-                    callbackExecutor.submit(() -> {
+                    // 2. Geef de veilige kopie door aan de Virtual Thread
+                    sub.callbackGroup().execute(() -> {
                         try {
                             sub.callback().accept(safeData);
                         } finally {
@@ -149,7 +150,7 @@ public class Executor {
                             // sluit die dan hier.
                             messageArena.close();
                         }
-                    });
+                    }, callbackExecutor);
                 }
             }
         }
@@ -185,7 +186,7 @@ public class Executor {
                 int rc = RclLib.rcl_take_request(srv.handle(), requestHeader, requestBuffer);
 
                 if (rc == 0) {
-                    callbackExecutor.submit(() -> {
+                    srv.callbackGroup().execute(() -> {
                         try {
                             // Voer de callback uit. De programmeur gebruikt de transactionArena als allocator.
                             // We casten de callback naar de generieke Function/Interface vorm.
@@ -202,7 +203,7 @@ public class Executor {
                         } finally {
                             transactionArena.close();
                         }
-                    });
+                    }, callbackExecutor);
                 } else {
                     transactionArena.close();
                 }
@@ -234,15 +235,14 @@ public class Executor {
                 // Dit reset de interne timer en berekent de volgende deadline
                 int rc = RclLib.rcl_timer_call(timer.handle());
                 
-                if (rc == 0) { // RCL_RET_OK
-                    // 2. Voer de Java callback uit in een Virtual Thread
-                    callbackExecutor.submit(() -> {
+                if (rc == 0) { 
+                    timer.callbackGroup().execute(() -> {
                         try {
                             timer.callback().accept(timer); 
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                    });
+                    }, callbackExecutor);
                 }
             }
         }
@@ -287,17 +287,14 @@ public class Executor {
                     if (future != null) {
                         // Debug: Kijk of we hier komen
                         // System.out.println("[Executor] Completing future for SeqNum: " + sequenceNumber);
-                        callbackExecutor.submit(() -> {
+                        client.callbackGroup().execute(() -> {
                             try {
                                 future.complete(responseBuffer);
                                 // System.out.println("[Executor] Future.complete() aangeroepen");
                             } finally {
-                                // Let op: wie sluit de arena? 
-                                // Meestal doe je dit in de .thenAccept() van de gebruiker
-                                // of je kopieert de data hier naar de heap.
-                                // responseArena.close();
+                                responseArena.close();
                             }
-                        });
+                        }, callbackExecutor);
                     } else {
                         responseArena.close();
                     }

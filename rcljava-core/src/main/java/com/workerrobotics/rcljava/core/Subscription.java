@@ -13,6 +13,7 @@ import com.workerrobotics.rcljava.core.events.HandleType;
 import com.workerrobotics.rcljava.ffi.NativeChecks;
 import com.workerrobotics.rcljava.ffi.RclException;
 import com.workerrobotics.rcljava.loader.RosLoader;
+import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 
 import static org.ros2.rcl.RclLib.*;
 
@@ -31,6 +32,7 @@ public class Subscription<T> implements AutoCloseable {
     private final MemorySegment handle;
     private final Class<T> messageType;
     private final Consumer<MemorySegment> callback;
+    private final CallbackGroup callbackGroup;
     private final String topicName;
     private final QoS qos;
     private final Node node;
@@ -45,26 +47,23 @@ public class Subscription<T> implements AutoCloseable {
      * @param callback The function to execute when a new message is received.
      * @throws com.workerrobotics.rcljava.ffi.RclException If initialization fails at the native level.
      */
-    public Subscription(Node node, String topicName, Class<T> messageType, QoS qos, Consumer<MemorySegment> callback) {
+    public Subscription(Node node, String topicName, Class<T> messageType, QoS qos, Consumer<MemorySegment> callback, CallbackGroup callbackGroup) {
         this.node = node;
         this.qos = qos;
         this.topicName = topicName;
         this.messageType = messageType;
         this.callback = callback;
+        this.callbackGroup = callbackGroup;
 
         MemorySegment typeSupport = getDynamicTypeSupport(messageType);
 
-        // 1. Initialiseer de handle in de shared arena van de node
         this.handle = rcl_get_zero_initialized_subscription(node.nodeArena);
-        
-        // 2. Opties ophalen
         MemorySegment options = rcl_subscription_get_default_options(node.nodeArena);
 
         if (qos != null) {
             qos.applyTo(options);
         }
-
-        // 3. Subscription initialiseren
+        
         try (Arena tempArena = Arena.ofConfined()) {
             MemorySegment cTopicName = tempArena.allocateFrom(topicName);
             
@@ -86,9 +85,10 @@ public class Subscription<T> implements AutoCloseable {
      * @param topicName The name of the topic.
      * @param messageType The Java class representing the ROS 2 message type.
      * @param callback The function to execute when a new message is received.
+     * @param callbackGroup The name of the callback group this service belongs to.
      */
-    public Subscription(Node node, String topicName, Class<T> messageType, Consumer<MemorySegment> callback) {
-        this(node, topicName, messageType, null, callback);
+    public Subscription(Node node, String topicName, Class<T> messageType, Consumer<MemorySegment> callback, CallbackGroup callbackGroup) {
+        this(node, topicName, messageType, null, callback, callbackGroup);
     }
 
     /** @return The parent {@link Node} instance. */
@@ -120,6 +120,9 @@ public class Subscription<T> implements AutoCloseable {
     public Consumer<MemorySegment> callback() {
         return callback;
     }
+
+    /** @return The {@link CallbackGroup} applied to the subscription. */
+    public CallbackGroup callbackGroup() { return callbackGroup;}
 
     /**
      * Attaches an event handler to this subscription (e.g., for monitoring QoS incompatibility).

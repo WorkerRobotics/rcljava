@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import org.ros2.rcl.RclLib;
 
+import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 import com.workerrobotics.rcljava.core.service.ServiceCallback;
 import com.workerrobotics.rcljava.core.service.ServiceType;
 import com.workerrobotics.rcljava.ffi.NativeChecks;
@@ -32,8 +33,7 @@ public class Service<T_Req, T_Res> implements AutoCloseable {
     private final String serviceName;
     private final ServiceCallback callback;
     private final ServiceType<T_Req, T_Res> serviceDefinition;
-    private final QoS qosProfile;
-    private final String callbackgroup;
+    private final CallbackGroup callbackgroup;
 
     /**
      * Initializes a new ROS 2 service server.
@@ -49,12 +49,11 @@ public class Service<T_Req, T_Res> implements AutoCloseable {
      * @param callbackGroup The name of the callback group this service belongs to.
      * @throws com.workerrobotics.rcljava.ffi.RclException If initialization fails at the native level.
      */
-    public Service(Node node, String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback, QoS qosProfile, String callbackGroup) {
+    public Service(Node node, String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback, CallbackGroup callbackGroup) {
         this.node = node;
         this.serviceName = serviceName;
         this.serviceDefinition = serviceDefinition;
         this.callback = callback;
-        this.qosProfile = qosProfile;
         this.callbackgroup = callbackGroup;
 
         // Haal Service Type Support op (bijv. example_interfaces/srv/SetBool)
@@ -87,8 +86,8 @@ public class Service<T_Req, T_Res> implements AutoCloseable {
     /** @return The name of this service. */
     public String serviceName() { return serviceName; }
 
-    /** @return The {@link QoS} profile applied to this service. */
-    public QoS qosProfile() { return qosProfile; }
+    /** @return The {@link CallbackGroup} applied to this service */
+    public CallbackGroup callbackGroup() { return callbackgroup; }
 
     /**
      * Finalizes the native service and releases its handle.

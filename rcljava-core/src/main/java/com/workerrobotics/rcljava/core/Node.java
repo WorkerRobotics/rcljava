@@ -2,7 +2,10 @@ package com.workerrobotics.rcljava.core;
 
 import org.ros2.rcl.RclLib;
 import org.ros2.rcl.msgs.GEOMETRY_MSGS_Lib;
+import org.ros2.rcl.msgs.rosidl_runtime_c__String;
 
+import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
+import com.workerrobotics.rcljava.core.callbackgroup.MutuallyExclusiveCallbackGroup;
 import com.workerrobotics.rcljava.core.clock.ClockType;
 import com.workerrobotics.rcljava.core.events.EventHandler;
 import com.workerrobotics.rcljava.core.events.EventType;
@@ -19,6 +22,7 @@ import static org.ros2.rcl.RclLib.rcl_subscription_event_init;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SegmentAllocator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -46,8 +50,10 @@ public abstract class Node implements AutoCloseable {
     /** The name of the node. */
     protected final String name;
 
-    protected final List<Publisher<?>> publishers = new ArrayList<>();
+    private final CallbackGroup defaultGroup = new MutuallyExclusiveCallbackGroup();
+    protected final List<CallbackGroup> callbackGroups = new ArrayList<>();
 
+    protected final List<Publisher<?>> publishers = new ArrayList<>();
     protected final List<Subscription<?>> subscriptions = new ArrayList<>();
     protected final List<MemorySegment> guardconditions = new ArrayList<>();
     protected final List<Timer> timers = new ArrayList<>();
@@ -118,16 +124,21 @@ public abstract class Node implements AutoCloseable {
      * @param messageType The Java class of the message.
      * @param qos The Quality of Service profile (can be null).
      * @param callback The function executed when a message is received.
+     * @param callbackGroup The callbackgroup where the callback is executed.
      * @return A new {@link Subscription} instance.
      */
-    public <T> Subscription<T> createSubscription(String topicName, Class<T> messageType, QoS qos, Consumer<MemorySegment> callback) {
-        Subscription<T> sub = new Subscription<>(this, topicName, messageType, qos, callback);
+    public <T> Subscription<T> createSubscription(String topicName, Class<T> messageType, QoS qos, Consumer<MemorySegment> callback, CallbackGroup callbackGroup) {
+        Subscription<T> sub = new Subscription<>(this, topicName, messageType, qos, callback, callbackGroup);
         this.subscriptions.add(sub);
         return sub;
     }
 
+    public <T> Subscription<T> createSubscription(String topicName, Class<T> messageType, Consumer<MemorySegment> callback, CallbackGroup callbackGroup) {
+      return this.createSubscription(topicName, messageType, null, callback, callbackGroup);
+    }
+
     public <T> Subscription<T> createSubscription(String topicName, Class<T> messageType, Consumer<MemorySegment> callback) {
-      return this.createSubscription(topicName, messageType, null, callback);
+      return this.createSubscription(topicName, messageType, null, callback, this.defaultGroup);
     }
 
     /**
@@ -142,18 +153,14 @@ public abstract class Node implements AutoCloseable {
      * @param callbackGroup The name of the callback group.
      * @return A new {@link Service} instance.
      */
-    public <T_Req, T_Res> Service<T_Req, T_Res> createService(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback, QoS qosProfile, String callbackGroup) {
-      Service<T_Req, T_Res> service = new Service<T_Req, T_Res>(this, serviceName, serviceDefinition, callback, qosProfile, callbackGroup);
+    public <T_Req, T_Res> Service<T_Req, T_Res> createService(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback, CallbackGroup callbackGroup) {
+      Service<T_Req, T_Res> service = new Service<T_Req, T_Res>(this, serviceName, serviceDefinition, callback, callbackGroup);
       this.services.add(service);
       return service;
     }
 
-    public <T_Req, T_Res> Service<T_Req, T_Res> createService(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback, QoS qosProfile) {
-      return this.createService(serviceName, serviceDefinition, callback, qosProfile, "");
-    }
-
     public <T_Req, T_Res> Service<T_Req, T_Res> createService(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback) {
-      return this.createService(serviceName, serviceDefinition, callback, null, "");
+      return this.createService(serviceName, serviceDefinition, callback, this.defaultGroup);
     }
 
     /**
@@ -163,16 +170,15 @@ public abstract class Node implements AutoCloseable {
      * @param <T_Res> The response type.
      * @param serviceName The name of the service to call.
      * @param serviceDefinition The request/response type definitions.
-     * @param qosProfile The QoS profile for the client.
-     * @param callback The function executed when a response is received.
+     * @param callbackGroup The callbackgroup where the client is executed when a response is received.
      * @return A new {@link Client} instance.
      */
-    public <T_Req, T_Res> Client<T_Req, T_Res> createClient(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, Consumer<MemorySegment> callback) {
-        return this.createClient(serviceName, serviceDefinition, null, callback);
+    public <T_Req, T_Res> Client<T_Req, T_Res> createClient(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition) {
+        return this.createClient(serviceName, serviceDefinition, this.defaultGroup);
     }
 
-    public <T_Req, T_Res> Client<T_Req, T_Res> createClient(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, QoS qosProfile, Consumer<MemorySegment> callback) {
-        Client<T_Req, T_Res> client = new Client<T_Req, T_Res>(this, serviceName, serviceDefinition, qosProfile, callback);
+    public <T_Req, T_Res> Client<T_Req, T_Res> createClient(String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, CallbackGroup callbackGroup) {
+        Client<T_Req, T_Res> client = new Client<T_Req, T_Res>(this, serviceName, serviceDefinition, callbackGroup);
         this.clients.add(client);
         return client;
     }
@@ -182,10 +188,17 @@ public abstract class Node implements AutoCloseable {
      * 
      * @param periodMillis The timer period in milliseconds.
      * @param callback The function executed upon timer expiry.
+     * @param callbackGroup The callbackgroup where the callback is executed.
      * @return A new {@link Timer} instance.
      */
+    public Timer createTimer(long periodMillis, Consumer<Timer> callback, CallbackGroup callbackGroup) {
+        var timer = new Timer(this, periodMillis * 1_000_000L, callback, callbackGroup);
+        this.timers.add(timer);
+        return timer;
+    }
+
     public Timer createTimer(long periodMillis, Consumer<Timer> callback) {
-        var timer = new Timer(this, periodMillis * 1_000_000L, callback);
+        var timer = new Timer(this, periodMillis * 1_000_000L, callback, this.defaultGroup);
         this.timers.add(timer);
         return timer;
     }
@@ -198,6 +211,16 @@ public abstract class Node implements AutoCloseable {
     /** @return The {@link Clock} instance associated with this node. */
     public Clock getClock() {
         return this.clock;
+    }
+
+    public CallbackGroup createCallbackGroup(Class<? extends CallbackGroup> type) {
+        try {
+            CallbackGroup group = type.getDeclaredConstructor().newInstance();
+            callbackGroups.add(group);
+            return group;
+        } catch (Exception e) {
+            throw new RuntimeException("Could not create callback group", e);
+        }
     }
 
     /**
@@ -268,6 +291,22 @@ public abstract class Node implements AutoCloseable {
         }
 
         this.events.add(new EventHandler(eventType, event, callback));
+    }
+
+    public MemorySegment createRosString(SegmentAllocator allocator, String value) {
+        // Allokeer de ROS String struct
+        
+        MemorySegment rosString = rosidl_runtime_c__String.allocate(allocator);
+        
+        // Allokeer de eigenlijke tekst in het geheugen
+        MemorySegment cStr = allocator.allocateFrom(value);
+        
+        // Vul de velden van de ROS String struct (data, size, capacity)
+        rosidl_runtime_c__String.data(rosString, cStr);
+        rosidl_runtime_c__String.size(rosString, value.length());
+        rosidl_runtime_c__String.capacity(rosString, value.length() + 1);
+        
+        return rosString;
     }
 
     /**

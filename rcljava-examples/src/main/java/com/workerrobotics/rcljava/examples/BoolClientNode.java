@@ -20,10 +20,7 @@ public class BoolClientNode extends Node {
 
         // Maak een client aan voor de service
         Client<std_srvs__srv__SetBool_Request, std_srvs__srv__SetBool_Response> client = this.createClient(
-            serviceDefinition.getServiceIdentifier(), serviceDefinition,
-            (msgSegment) -> {
-                System.out.println("Client callback");
-            }
+            serviceDefinition.getServiceIdentifier(), serviceDefinition
         );
         
         this.client = client;
