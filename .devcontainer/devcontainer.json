@@ -1,7 +1,11 @@
 {
   "name": "ROS 2 Jazzy + Temurin JDK 25 (rcljava)",
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    // Uncomment in case of Apple with Silicon chip
+    // "options" : [
+    //   "--platform=linux/amd64"
+    // ]
   },
   "customizations": {
     "vscode": {
@@ -26,7 +30,8 @@
   },
   "runArgs": [
     "--network=host",
-    "--privileged"
+    "--privileged",
+    // "--platform=linux/amd64" // Uncomment in case of Apple Silicon chip
   ],
   "remoteUser": "root",
   "postCreateCommand": "bash -lc 'source /opt/ros/jazzy/setup.bash && mvn -q -DskipTests package || true'"
