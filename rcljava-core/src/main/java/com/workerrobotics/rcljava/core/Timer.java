@@ -76,6 +76,16 @@ public class Timer implements AutoCloseable {
     /** @return The {@link CallbackGroup} applied to this Timer. */
     public CallbackGroup callbackGroup() {return this.callbackGroup;}
 
+    /** @return The return code if the timer is canceled successfully. */
+    public int cancel() {
+        return RclLib.rcl_timer_cancel(handle);
+    }
+
+    /** @return The return code if the timer is reset successfully. */
+    public int reset() {
+        return RclLib.rcl_timer_reset(handle);
+    }
+
     /**
      * Finalizes the native timer and releases associated resources.
      * 
