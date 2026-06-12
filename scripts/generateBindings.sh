@@ -52,7 +52,7 @@ jextract --output src/main/java \
     -I $ROS_INC/rosidl_dynamic_typesupport_fastrtps \
     $ROS_INC/rcl/rcl/rcl.h
 
-for PKG in std_msgs geometry_msgs std_srvs rosidl_runtime_c rmw; do
+for PKG in std_msgs geometry_msgs std_srvs rosidl_runtime_c rmw sensor_msgs; do
     echo "Generating bindings for $PKG..."
     
     # Maak een tijdelijke wrapper header die alle .h bestanden uit de msg/srv map includeert
@@ -71,6 +71,8 @@ for PKG in std_msgs geometry_msgs std_srvs rosidl_runtime_c rmw; do
         -I $ROS_INC/fastcdr \
         -I $ROS_INC/std_msgs \
         -I $ROS_INC/service_msgs \
+        -I $ROS_INC/geometry_msgs \
+        -I $ROS_INC/sensor_msgs \
         $TEMP_HEADER
         
     rm $TEMP_HEADER
