@@ -13,7 +13,7 @@ Implementation details live under the internal packages:
 - `com.workerrobotics.rcljava.internal.ffi`
 
 ## Devcontainer
-A VS Code devcontainer is included under `.devcontainer/` based on `osrf/ros:jazzy-desktop` with Temurin JDK 25 and Maven.
+A VS Code devcontainer is included under `.devcontainer/` based on `osrf/ros:jazzy-desktop` with the RMW Cyclone_DDS and Temurin JDK 25 and Maven.
 
 ## Build
 ```bash
