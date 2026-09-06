@@ -1,6 +1,14 @@
-# rcljava (skeleton)
+# rcljava
 
-This is a Maven multi-module skeleton for building a Java ROS 2 client library targeting ROS 2 Jazzy and newer.
+This is a Maven multi-module project for building a Java ROS 2 client library targeting ROS 2 Jazzy and newer.
+
+## OSS project information
+
+- License: [Apache License 2.0](LICENSE)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Notice: [NOTICE](NOTICE)
 
 > Note: This project is still Work In Progress!
 
