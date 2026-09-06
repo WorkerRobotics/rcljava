@@ -10,7 +10,7 @@
 // import org.junit.jupiter.api.Test;
 // import org.mockito.MockedStatic;
 // import org.ros2.rcl.RclLib;
-// import com.workerrobotics.rcljava.loader.RosLoader;
+// import com.workerrobotics.rcljava.internal.loader.RosLoader;
 // import com.workerrobotics.rcljava.core.clock.ClockType;
 
 // class SubscriptionTest {

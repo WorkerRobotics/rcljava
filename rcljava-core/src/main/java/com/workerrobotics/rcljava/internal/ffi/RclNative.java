@@ -1,4 +1,4 @@
-package com.workerrobotics.rcljava.ffi;
+package com.workerrobotics.rcljava.internal.ffi;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;

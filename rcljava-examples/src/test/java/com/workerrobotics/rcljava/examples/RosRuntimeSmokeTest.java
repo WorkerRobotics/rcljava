@@ -2,9 +2,9 @@ package com.workerrobotics.rcljava.examples;
 
 import com.workerrobotics.rcljava.core.Node;
 import com.workerrobotics.rcljava.core.RosContext;
-import com.workerrobotics.rcljava.ffi.RclNative;
+import com.workerrobotics.rcljava.internal.ffi.RclNative;
 import com.workerrobotics.rcljava.core.RosRuntime;
-import com.workerrobotics.rcljava.loader.RosConfig;
+import com.workerrobotics.rcljava.internal.loader.RosConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

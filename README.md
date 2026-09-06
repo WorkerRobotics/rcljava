@@ -5,10 +5,12 @@ This is a Maven multi-module skeleton for building a Java ROS 2 client library t
 > Note: This project is still Work In Progress!
 
 ## Modules
-- **rcljava-loader**: runtime native library loader (System.load with absolute paths).
-- **rcljava-ffi**: placeholder module to depend on your jextract-generated bindings repo/artifact.
-- **rcljava-core**: high-level Java API surface (RosRuntime/Context/Node placeholders).
-- **rcljava-examples**: example app entrypoint.
+- **rcljava-core**: public runtime API and implementation detail packages for native loading and FFI support.
+- **rcljava-examples**: example app entrypoint only.
+
+Implementation details live under the internal packages:
+- `com.workerrobotics.rcljava.internal.loader`
+- `com.workerrobotics.rcljava.internal.ffi`
 
 ## Devcontainer
 A VS Code devcontainer is included under `.devcontainer/` based on `osrf/ros:jazzy-desktop` with Temurin JDK 25 and Maven.
@@ -24,7 +26,7 @@ source /opt/ros/jazzy/setup.bash
 mvn -q -pl rcljava-examples -am exec:java
 ```
 
-> Note: rcljava-core is a skeleton; wire your jextract bindings into `rcljava-ffi` and implement the native calls in `rcljava-core`.
+> Note: rcljava-core is the runtime core; the generated JNI/FFI bindings and native loader logic live under `com.workerrobotics.rcljava.internal.ffi` and `com.workerrobotics.rcljava.internal.loader`.
 
 
 ## Wiring your existing jextract bindings
@@ -34,7 +36,7 @@ Edit the parent `pom.xml` properties:
 - `ros.bindings.artifactId`
 - `ros.bindings.version`
 
-`rcljava-ffi` depends on these coordinates and is the only module that should directly reference jextract-generated classes.
+`rcljava-core` depends on these coordinates and the generated binding classes are consumed only from the internal FFI package.
 
 ## Native library auto-detection
 If you don't provide `RosConfig.nativeLibraryDirs`, the loader will try (in order):
@@ -64,7 +66,7 @@ Then initialize once at startup (example skeleton):
 
 ```java
 import com.workerrobotics.rcljava.core.RosRuntime;
-import com.workerrobotics.rcljava.loader.RosConfig;
+import com.workerrobotics.rcljava.internal.loader.RosConfig;
 
 RosRuntime.initialize(args, RosConfig.builder().strict(true).build());
 // create nodes, executors, etc...

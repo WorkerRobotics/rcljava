@@ -5,8 +5,8 @@ import java.lang.foreign.MemorySegment;
 
 import org.ros2.rcl.RclLib;
 
-import com.workerrobotics.rcljava.ffi.Bindings;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.Bindings;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
 
 /**
  * Manages the global native ROS 2 context ({@code rcl_context_t}).
@@ -42,7 +42,7 @@ public class RosContext {
      * </p>
      * 
      * @return A {@link MemorySegment} representing the pointer to the initialized {@code rcl_context_t}.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If the native {@code rcl_init} call fails.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If the native {@code rcl_init} call fails.
      * @throws IllegalStateException If native bindings are missing.
      */
     public static synchronized MemorySegment get() {

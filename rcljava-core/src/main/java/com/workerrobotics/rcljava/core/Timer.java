@@ -6,7 +6,7 @@ import org.ros2.rcl.RclLib;
 import java.lang.foreign.MemorySegment;
 import java.util.function.Consumer;
 
-import com.workerrobotics.rcljava.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
 
 /**
  * A Java wrapper for the ROS 2 {@code rcl_timer_t} structure.
@@ -36,7 +36,7 @@ public class Timer implements AutoCloseable {
      * @param periodNanoseconds The interval between timer executions in nanoseconds.
      * @param callback The Java function to be executed when the timer expires. 
      *                 The function receives the timer instance as an argument.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If the native {@code rcl_timer_init} call fails.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If the native {@code rcl_timer_init} call fails.
      */
     public Timer(Node node, long periodNanoseconds, Consumer<Timer> callback, CallbackGroup callbackGroup) {
         this.node = node;

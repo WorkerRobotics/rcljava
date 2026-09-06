@@ -1,4 +1,4 @@
-package com.workerrobotics.rcljava.ffi;
+package com.workerrobotics.rcljava.internal.ffi;
 
 public final class RclException extends RuntimeException {
   private final int returncode;

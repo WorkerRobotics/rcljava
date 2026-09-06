@@ -1,4 +1,4 @@
-package com.workerrobotics.rcljava.ffi;
+package com.workerrobotics.rcljava.internal.ffi;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public final class Bindings {
       throw new IllegalStateException(
           "Could not find generated bindings entrypoint class 'RclLib' on the classpath.\n" +
           "Tried: " + CANDIDATES + "\n" +
-          "Fix: update com.workerrobotics.rcljava.ffi.Bindings.CANDIDATES to include the correct FQCN."
+          "Fix: update com.workerrobotics.rcljava.internal.ffi.Bindings.CANDIDATES to include the correct FQCN."
       );
     }
   }

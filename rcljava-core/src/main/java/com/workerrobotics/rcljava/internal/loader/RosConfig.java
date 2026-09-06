@@ -1,4 +1,4 @@
-package com.workerrobotics.rcljava.loader;
+package com.workerrobotics.rcljava.internal.loader;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

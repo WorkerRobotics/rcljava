@@ -18,8 +18,8 @@ import org.ros2.rcl.msgs.geometry_msgs__msg__Twist;
 import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 import com.workerrobotics.rcljava.core.events.EventHandler;
 import com.workerrobotics.rcljava.core.service.ServiceCallback;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
-import com.workerrobotics.rcljava.ffi.RclException;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.RclException;
 
 import static org.ros2.rcl.RclLib.*;
 

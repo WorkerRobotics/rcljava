@@ -10,8 +10,8 @@ import org.ros2.rcl.RclLib;
 import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 import com.workerrobotics.rcljava.core.service.ServiceCallback;
 import com.workerrobotics.rcljava.core.service.ServiceType;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
-import com.workerrobotics.rcljava.loader.RosLoader;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.loader.RosLoader;
 
 /**
  * A Java wrapper for the ROS 2 {@code rcl_service_t} structure.
@@ -47,7 +47,7 @@ public class Service<T_Req, T_Res> implements AutoCloseable {
      * @param callback The function executed when a request is received.
      * @param qosProfile The Quality of Service profile, or {@code null} for defaults.
      * @param callbackGroup The name of the callback group this service belongs to.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If initialization fails at the native level.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If initialization fails at the native level.
      */
     public Service(Node node, String serviceName, ServiceType<T_Req, T_Res> serviceDefinition, ServiceCallback callback, CallbackGroup callbackGroup) {
         this.node = node;

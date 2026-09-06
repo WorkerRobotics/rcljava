@@ -11,8 +11,6 @@
   <name>rcljava</name>
 
   <modules>
-    <module>rcljava-loader</module>
-    <module>rcljava-ffi</module>
     <module>rcljava-core</module>
     <module>rcljava-examples</module>
   </modules>

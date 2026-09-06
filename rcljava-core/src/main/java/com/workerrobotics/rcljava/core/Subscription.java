@@ -10,9 +10,9 @@ import org.ros2.rcl.RclLib;
 import com.workerrobotics.rcljava.core.events.EventHandler;
 import com.workerrobotics.rcljava.core.events.EventType;
 import com.workerrobotics.rcljava.core.events.HandleType;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
-import com.workerrobotics.rcljava.ffi.RclException;
-import com.workerrobotics.rcljava.loader.RosLoader;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.RclException;
+import com.workerrobotics.rcljava.internal.loader.RosLoader;
 import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 
 import static org.ros2.rcl.RclLib.*;
@@ -45,7 +45,7 @@ public class Subscription<T> implements AutoCloseable {
      * @param messageType The Java class representing the ROS 2 message type.
      * @param qos The QoS profile to apply, or {@code null} to use default options.
      * @param callback The function to execute when a new message is received.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If initialization fails at the native level.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If initialization fails at the native level.
      */
     public Subscription(Node node, String topicName, Class<T> messageType, QoS qos, Consumer<MemorySegment> callback, CallbackGroup callbackGroup) {
         this.node = node;
@@ -150,7 +150,7 @@ public class Subscription<T> implements AutoCloseable {
      * Dynamically retrieves the type support handle for the given message class.
      * 
      * <p>This method constructs the expected C symbol name based on the class name
-     * and performs a look-up using {@link com.workerrobotics.rcljava.loader.RosLoader}.</p>
+     * and performs a look-up using {@link com.workerrobotics.rcljava.internal.loader.RosLoader}.</p>
      * 
      * @param messageType The class to look up.
      * @return The {@link MemorySegment} pointing to the type support handle.

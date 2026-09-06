@@ -12,8 +12,8 @@ import org.ros2.rcl.rmw_request_id_t;
 
 import com.workerrobotics.rcljava.core.callbackgroup.CallbackGroup;
 import com.workerrobotics.rcljava.core.service.ServiceType;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
-import com.workerrobotics.rcljava.loader.RosLoader;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.loader.RosLoader;
 
 import static org.ros2.rcl.RclLib.*;
 
@@ -55,7 +55,7 @@ public class Client<T_Req, T_Res> implements AutoCloseable {
      * @param serviceType An object defining the request/response classes and identifiers.
      * @param qosProfile The Quality of Service profile, or {@code null} for defaults.
      * @param callback Optional consumer for manual response handling (can be {@code null}).
-     * @throws com.workerrobotics.rcljava.ffi.RclException If native initialization fails.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If native initialization fails.
      */
     public Client(Node node, String serviceName, ServiceType<T_Req, T_Res> serviceType, CallbackGroup callbackGroup) {
         this.node = node;
@@ -83,7 +83,7 @@ public class Client<T_Req, T_Res> implements AutoCloseable {
      * 
      * @param request A {@link MemorySegment} containing the serialized request data.
      * @return A future that will contain the response data as a {@link MemorySegment}.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If the native send operation fails.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If the native send operation fails.
      */
     public CompletableFuture<MemorySegment> sendRequest(MemorySegment request) {
         CompletableFuture<MemorySegment> future = new CompletableFuture<>();

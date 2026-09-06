@@ -1,4 +1,4 @@
-package com.workerrobotics.rcljava.loader;
+package com.workerrobotics.rcljava.internal.loader;
 
 import java.io.File;
 import java.lang.foreign.Arena;

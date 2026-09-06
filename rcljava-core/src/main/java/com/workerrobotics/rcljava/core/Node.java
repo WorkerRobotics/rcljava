@@ -12,9 +12,9 @@ import com.workerrobotics.rcljava.core.events.EventType;
 import com.workerrobotics.rcljava.core.events.HandleType;
 import com.workerrobotics.rcljava.core.service.ServiceCallback;
 import com.workerrobotics.rcljava.core.service.ServiceType;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
-import com.workerrobotics.rcljava.ffi.RclException;
-import com.workerrobotics.rcljava.loader.RosLoader;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.RclException;
+import com.workerrobotics.rcljava.internal.loader.RosLoader;
 
 import static org.ros2.rcl.RclLib.rcl_get_zero_initialized_event;
 import static org.ros2.rcl.RclLib.rcl_publisher_event_init;

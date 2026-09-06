@@ -1,6 +1,6 @@
 package com.workerrobotics.rcljava.core;
 
-import com.workerrobotics.rcljava.ffi.RclException;
+import com.workerrobotics.rcljava.internal.ffi.RclException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 
@@ -8,8 +8,8 @@ import org.ros2.rcl.RclLib;
 import org.ros2.rcl.rcl_clock_t;
 
 import com.workerrobotics.rcljava.core.clock.ClockType;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
-import com.workerrobotics.rcljava.ffi.RclException;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.RclException;
 
 /**
  * A Java wrapper for the ROS 2 {@code rcl_clock_t} structure.

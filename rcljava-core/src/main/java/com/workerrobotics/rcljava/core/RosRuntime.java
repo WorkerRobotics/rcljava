@@ -1,8 +1,8 @@
 package com.workerrobotics.rcljava.core;
 
-import com.workerrobotics.rcljava.ffi.RclNative;
-import com.workerrobotics.rcljava.loader.RosConfig;
-import com.workerrobotics.rcljava.loader.RosLoader;
+import com.workerrobotics.rcljava.internal.ffi.RclNative;
+import com.workerrobotics.rcljava.internal.loader.RosConfig;
+import com.workerrobotics.rcljava.internal.loader.RosLoader;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Objects;

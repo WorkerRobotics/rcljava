@@ -14,14 +14,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.workerrobotics.rcljava</groupId>
-      <artifactId>rcljava-loader</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.workerrobotics.rcljava</groupId>
-      <artifactId>rcljava-ffi</artifactId>
-      <version>${project.version}</version>
+      <groupId>${ros.bindings.groupId}</groupId>
+      <artifactId>${ros.bindings.artifactId}</artifactId>
+      <version>${ros.bindings.version}</version>
     </dependency>
 
     <dependency>

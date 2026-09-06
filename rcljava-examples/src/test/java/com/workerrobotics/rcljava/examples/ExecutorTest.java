@@ -17,7 +17,7 @@ import com.workerrobotics.rcljava.core.Executor;
 import com.workerrobotics.rcljava.core.Node;
 import com.workerrobotics.rcljava.core.RosContext;
 import com.workerrobotics.rcljava.core.RosRuntime;
-import com.workerrobotics.rcljava.loader.RosConfig;
+import com.workerrobotics.rcljava.internal.loader.RosConfig;
 
 class ExecutorTest {
 

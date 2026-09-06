@@ -1,4 +1,4 @@
-package com.workerrobotics.rcljava.ffi;
+package com.workerrobotics.rcljava.internal.ffi;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;

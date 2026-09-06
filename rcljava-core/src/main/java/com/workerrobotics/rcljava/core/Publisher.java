@@ -9,7 +9,7 @@ import org.ros2.rcl.msgs.GEOMETRY_MSGS_Lib;
 
 import com.workerrobotics.rcljava.core.events.EventType;
 import com.workerrobotics.rcljava.core.events.HandleType;
-import com.workerrobotics.rcljava.ffi.NativeChecks;
+import com.workerrobotics.rcljava.internal.ffi.NativeChecks;
 
 import static org.ros2.rcl.RclLib.*;
 
@@ -43,7 +43,7 @@ public class Publisher<T> implements AutoCloseable {
      * @param topicName The name of the topic to publish to (e.g., "cmd_vel").
      * @param messageType The Java class representing the ROS 2 message type.
      * @param typeSupport The memory handle pointing to the native {@code rosidl_message_type_support_t}.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If initialization fails at the native level.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If initialization fails at the native level.
      */
     public Publisher(Node node, String topicName, Class<T> messageType, MemorySegment typeSupport) {
         this.node = node;
@@ -68,7 +68,7 @@ public class Publisher<T> implements AutoCloseable {
      * implementation specified in the {@link RosContext}.</p>
      * 
      * @param message The native memory segment containing the serialized message data.
-     * @throws com.workerrobotics.rcljava.ffi.RclException If the native {@code rcl_publish} call fails.
+     * @throws com.workerrobotics.rcljava.internal.ffi.RclException If the native {@code rcl_publish} call fails.
      */
     public void publish(MemorySegment messageSegment) {
         // In ROS2 rcl_publish geef je de handle en een pointer naar de ROS message struct
