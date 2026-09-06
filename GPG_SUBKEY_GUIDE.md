@@ -42,6 +42,15 @@ base64 subkeys.asc > subkeys.asc.b64
 
 # Now copy the contents of subkeys.asc.b64 into your CI secret (e.g., GPG_PRIVATE_KEY_B64)
 
+# One-line: export secret-subkeys and base64-encode for direct copy/paste into CI
+# Replace <KEYID> with your primary key id (or email) and run from a trusted machine.
+# The output is safe to paste directly into a GitHub secret as the value for GPG_PRIVATE_KEY_B64.
+
+gpg --armor --export-secret-subkeys <KEYID> | base64 | tr -d '\n' > subkeys.asc.b64
+
+# You can then display it for copying (use with caution):
+# cat subkeys.asc.b64
+
 5) Importing the secret subkey in CI or another machine
 
 # On CI (GitHub Actions), decode and import:
