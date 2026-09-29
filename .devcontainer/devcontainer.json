@@ -28,6 +28,10 @@
       }
     }
   },
+  "remoteEnv": {
+    "MAVEN_GPG_KEY": "${localEnv:MAVEN_GPG_KEY}",
+    "MAVEN_GPG_PASSPHRASE": "${localEnv:MAVEN_GPG_PASSPHRASE}"
+  },
   "runArgs": [
     "--network=host",
     "--privileged",
