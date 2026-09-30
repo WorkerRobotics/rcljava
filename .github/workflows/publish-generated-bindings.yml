@@ -1,0 +1,270 @@
+name: Publish generated ROS 2 Java bindings
+
+on:
+  workflow_dispatch:
+    inputs:
+      bindingsVersion:
+        description: 'Bindings version, e.g. 25.0.23'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-generated-bindings
+  cancel-in-progress: false
+
+jobs:
+  publish-bindings:
+    name: Generate and publish bindings
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      #
+      # Convert the base64 GitHub secret back to the ASCII-armored
+      # private key expected by maven-gpg-plugin with signer=bc.
+      #
+      - name: Prepare Maven GPG key
+        env:
+          GPG_PRIVATE_KEY_B64: ${{ secrets.GPG_PRIVATE_KEY_B64 }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GPG_PRIVATE_KEY_B64:-}" ]; then
+            echo "GPG_PRIVATE_KEY_B64 secret is missing" >&2
+            exit 1
+          fi
+
+          {
+            echo 'MAVEN_GPG_KEY<<EOF_GPG_KEY'
+            printf '%s' "$GPG_PRIVATE_KEY_B64" | base64 --decode
+            echo
+            echo 'EOF_GPG_KEY'
+          } >> "$GITHUB_ENV"
+
+      #
+      # Build the existing devcontainer and perform the complete
+      # binding generation + Maven Central deployment inside it.
+      #
+      - name: Generate and publish bindings
+        uses: devcontainers/ci@v0.3
+        env:
+          # These two are picked up by remoteEnv/localEnv in devcontainer.json
+          MAVEN_GPG_KEY: ${{ env.MAVEN_GPG_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+          # Maven Central Portal credentials
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+
+          # Version requested when starting the workflow
+          BINDINGS_VERSION: ${{ inputs.bindingsVersion }}
+
+        with:
+          push: never
+
+          env: |
+            MAVEN_GPG_KEY
+            MAVEN_GPG_PASSPHRASE
+            CENTRAL_USERNAME
+            CENTRAL_PASSWORD
+            BINDINGS_VERSION
+
+          runCmd: |
+            set -euo pipefail
+
+            echo "=== Environment ==="
+            java --version
+            mvn --version
+
+            if [ -f /opt/ros/jazzy/setup.bash ]; then
+              source /opt/ros/jazzy/setup.bash
+            else
+              echo "/opt/ros/jazzy/setup.bash not found" >&2
+              exit 1
+            fi
+
+            #
+            # Validate secrets without printing their values.
+            #
+            test -n "${MAVEN_GPG_KEY:-}" || {
+              echo "MAVEN_GPG_KEY is missing" >&2
+              exit 1
+            }
+
+            test -n "${MAVEN_GPG_PASSPHRASE:-}" || {
+              echo "MAVEN_GPG_PASSPHRASE is missing" >&2
+              exit 1
+            }
+
+            test -n "${CENTRAL_USERNAME:-}" || {
+              echo "CENTRAL_USERNAME is missing" >&2
+              exit 1
+            }
+
+            test -n "${CENTRAL_PASSWORD:-}" || {
+              echo "CENTRAL_PASSWORD is missing" >&2
+              exit 1
+            }
+
+            test -n "${BINDINGS_VERSION:-}" || {
+              echo "BINDINGS_VERSION is missing" >&2
+              exit 1
+            }
+
+            case "$BINDINGS_VERSION" in
+              *-SNAPSHOT)
+                echo "Bindings release version must not end in -SNAPSHOT" >&2
+                exit 1
+                ;;
+            esac
+
+            #
+            # Configure Maven Central Portal credentials.
+            #
+            mkdir -p "$HOME/.m2"
+
+            cat > "$HOME/.m2/settings.xml" <<EOF
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="
+                        http://maven.apache.org/SETTINGS/1.0.0
+                        https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+              <servers>
+                <server>
+                  <id>central</id>
+                  <username>${CENTRAL_USERNAME}</username>
+                  <password>${CENTRAL_PASSWORD}</password>
+                </server>
+              </servers>
+
+            </settings>
+            EOF
+
+            #
+            # Generate the ROS 2 Java bindings.
+            #
+            echo "=== Generating ROS 2 Jazzy Java bindings ==="
+
+            if [ ! -f scripts/generateBindings.sh ]; then
+              echo "scripts/generateBindings.sh does not exist" >&2
+              exit 1
+            fi
+
+            (
+              cd scripts
+              bash ./generateBindings.sh
+            )
+
+            #
+            # Locate the generated Maven project.
+            #
+            # This deliberately searches on artifactId instead of assuming
+            # a specific output directory.
+            #
+            echo "=== Locating generated bindings POM ==="
+
+            BINDINGS_POM="$(
+              find . \
+                -type f \
+                -name pom.xml \
+                -exec grep -l \
+                  '<artifactId>ros2-java-bindings-jazzy</artifactId>' \
+                  {} \; \
+                | head -n 1
+            )"
+
+            if [ -z "${BINDINGS_POM:-}" ]; then
+              echo "Could not find generated ros2-java-bindings-jazzy pom.xml" >&2
+              exit 1
+            fi
+
+            echo "Bindings POM: $BINDINGS_POM"
+
+            #
+            # Set the exact release version.
+            #
+            mvn \
+              --batch-mode \
+              --no-transfer-progress \
+              -f "$BINDINGS_POM" \
+              versions:set \
+              -DnewVersion="$BINDINGS_VERSION" \
+              -DgenerateBackupPoms=false
+
+            #
+            # Verify that we are about to publish the expected coordinates.
+            #
+            GROUP_ID="$(
+              mvn \
+                -f "$BINDINGS_POM" \
+                help:evaluate \
+                -Dexpression=project.groupId \
+                -q \
+                -DforceStdout
+            )"
+
+            ARTIFACT_ID="$(
+              mvn \
+                -f "$BINDINGS_POM" \
+                help:evaluate \
+                -Dexpression=project.artifactId \
+                -q \
+                -DforceStdout
+            )"
+
+            VERSION="$(
+              mvn \
+                -f "$BINDINGS_POM" \
+                help:evaluate \
+                -Dexpression=project.version \
+                -q \
+                -DforceStdout
+            )"
+
+            echo
+            echo "Publishing:"
+            echo "  groupId:    $GROUP_ID"
+            echo "  artifactId: $ARTIFACT_ID"
+            echo "  version:    $VERSION"
+            echo
+
+            if [ "$GROUP_ID" != "com.worker-robotics" ]; then
+              echo "Unexpected groupId: $GROUP_ID" >&2
+              exit 1
+            fi
+
+            if [ "$ARTIFACT_ID" != "ros2-java-bindings-jazzy" ]; then
+              echo "Unexpected artifactId: $ARTIFACT_ID" >&2
+              exit 1
+            fi
+
+            if [ "$VERSION" != "$BINDINGS_VERSION" ]; then
+              echo "Unexpected version: $VERSION" >&2
+              exit 1
+            fi
+
+            #
+            # Build, create sources/javadocs, sign and upload.
+            #
+            echo "=== Publishing generated bindings to Maven Central ==="
+
+            mvn \
+              --batch-mode \
+              --no-transfer-progress \
+              -f "$BINDINGS_POM" \
+              clean deploy \
+              -Prelease \
+              -DskipTests=true \
+              -DskipITs=true
+
+            echo
+            echo "Bindings deployment completed successfully:"
+            echo "  ${GROUP_ID}:${ARTIFACT_ID}:${VERSION}"

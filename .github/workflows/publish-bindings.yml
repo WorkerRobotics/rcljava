@@ -30,7 +30,7 @@ jobs:
       CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
 
       # Used automatically by maven-gpg-plugin with signer=bc
-      MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      MAVEN_GPG_PASSPHRASE: "${{ secrets.GPG_PASSPHRASE }}"
 
     steps:
       - name: Checkout main branch
