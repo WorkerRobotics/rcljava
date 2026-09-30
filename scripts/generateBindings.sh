@@ -100,7 +100,7 @@ cat <<'EOF' > pom.xml
      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 <modelVersion>4.0.0</modelVersion>
 
-<groupId>com.github.WorkerRobotics</groupId>
+<groupId>com.worker-robotics</groupId>
 <artifactId>ros2-java-bindings-jazzy</artifactId>
 <version>25.0.22</version>
 <packaging>jar</packaging>
@@ -141,10 +141,10 @@ cat <<'EOF' > pom.xml
 <properties>
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
-    <maven.javadoc.plugin.version>3.10.1</maven.javadoc.plugin.version>
+    <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
+    <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
     <maven.gpg.plugin.version>3.2.4</maven.gpg.plugin.version>
-    <central.publishing.plugin.version>0.7.0</central.publishing.plugin.version>
+    <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
 </properties>
 
 <build>
@@ -192,44 +192,70 @@ cat <<'EOF' > pom.xml
 
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>${maven.gpg.plugin.version}</version>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>3.3.1</version>
+
             <configuration>
-                <!-- Use loopback pinentry so passphrase can be provided non-interactively (CI) -->
-                <gpgArguments>
-                    <arg>--pinentry-mode</arg>
-                    <arg>loopback</arg>
-                </gpgArguments>
-                <!-- Key name may be provided at runtime via -Dgpg.keyname or environment -->
-                <keyname>${gpg.keyname}</keyname>
+                <autoVersionSubmodules>true</autoVersionSubmodules>
+
+                <tagNameFormat>v@{project.version}</tagNameFormat>
+
+                <!-- Activeer jouw sources/javadoc/GPG/Central profiel
+                     tijdens release:perform -->
+                <releaseProfiles>release</releaseProfiles>
+
+                <!-- We willen expliciet alleen deploy -->
+                <goals>deploy</goals>
+
+                <pushChanges>true</pushChanges>
             </configuration>
-            <executions>
-                <execution>
-                    <id>sign-artifacts</id>
-                    <phase>verify</phase>
-                    <goals>
-                        <goal>sign</goal>
-                    </goals>
-                </execution>
-            </executions>
         </plugin>
 
-        <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>${central.publishing.plugin.version}</version>
-            <extensions>true</extensions>
-            <configuration>
-                <publishingServerId>central</publishingServerId>
-                <autoPublish>true</autoPublish>
-                <waitUntil>published</waitUntil>
-            </configuration>
-        </plugin>
     </plugins>
 </build>
+
+<profiles>
+    <profile>
+        <id>release</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>${maven.gpg.plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central.publishing.plugin.version}</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <publishingServerId>central</publishingServerId>
+                        <autoPublish>false</autoPublish>
+                        <waitUntil>published</waitUntil>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+</profiles>
 </project>
 EOF
 
-# Run maven command
-# mvn deploy -DskipTests --batch-mode
+# Normal development build: no GPG key or Maven Central credentials required
 mvn clean install -DskipTests --batch-mode
+
+# Release to Maven Central:
+# mvn -Prelease clean deploy -DskipTests --batch-mode
+# Optionally select a specific signing key:
+# mvn -Prelease clean deploy -DskipTests --batch-mode -Dgpg.keyname=YOUR_KEY_ID

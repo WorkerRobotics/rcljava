@@ -4,18 +4,20 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.workerrobotics.rcljava</groupId>
+    <groupId>com.worker-robotics.rcljava</groupId>
     <artifactId>rcljava-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>rcljava-examples</artifactId>
   <name>rcljava-examples (tests/docs)</name>
+  <description>Examples, tests and documentation for the WorkerRobotics rcljava ROS 2 Java client library.</description>
+  <url>https://github.com/WorkerRobotics/rcljava</url>
   <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
-      <groupId>com.workerrobotics.rcljava</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>rcljava-core</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -33,7 +35,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
-       <plugin>
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <executions>
@@ -52,4 +54,47 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${maven.source.plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven.javadoc.plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <doclint>none</doclint>
+              <source>${maven.compiler.release}</source>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

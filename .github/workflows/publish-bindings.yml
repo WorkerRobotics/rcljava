@@ -2,64 +2,182 @@ name: Publish bindings to Maven Central
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
+    inputs:
+      releaseVersion:
+        description: 'Release version, e.g. 25.0.23'
+        required: true
+        type: string
+
+      developmentVersion:
+        description: 'Next development version, e.g. 25.0.24-SNAPSHOT'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-bindings
+  cancel-in-progress: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
+    env:
+      # Maven Central Portal token credentials
+      CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+      CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+
+      # Used automatically by maven-gpg-plugin with signer=bc
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up JDK 25 and Maven Central credentials
+        uses: actions/setup-java@v6
         with:
           java-version: '25'
           distribution: 'temurin'
+          cache: 'maven'
 
-      - name: Import GPG signing key
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY_B64 }}
+          # Must match:
+          # <publishingServerId>central</publishingServerId>
+          server-id: central
+          server-username-env-var: CENTRAL_USERNAME
+          server-password-env-var: CENTRAL_PASSWORD
+
+      - name: Configure Git identity
         run: |
           set -euo pipefail
-          if [ -z "${GPG_PRIVATE_KEY:-}" ]; then
-            echo "No GPG_PRIVATE_KEY_B64 secret found" >&2
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Configure GPG signing key
+        env:
+          GPG_PRIVATE_KEY_B64: ${{ secrets.GPG_PRIVATE_KEY_B64 }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GPG_PRIVATE_KEY_B64:-}" ]; then
+            echo "GPG_PRIVATE_KEY_B64 secret is missing" >&2
             exit 1
           fi
-          echo "$GPG_PRIVATE_KEY" | base64 --decode > private.asc
-          gpg --batch --import private.asc
-          rm -f private.asc
-          mkdir -p ~/.gnupg
-          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-          gpgconf --kill gpg-agent || true
 
-      - name: Configure Maven settings (Sonatype credentials)
-        env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-        run: |
-          # Create a minimal settings.xml with server credentials for OSSRH
-          mkdir -p $HOME/.m2
-          cat > $HOME/.m2/settings.xml <<-XML
-          <settings>
-            <servers>
-              <server>
-                <id>central</id>
-                <username>${OSSRH_USERNAME}</username>
-                <password>${OSSRH_PASSWORD}</password>
-              </server>
-            </servers>
-          </settings>
-          XML
+          if [ -z "${MAVEN_GPG_PASSPHRASE:-}" ]; then
+            echo "GPG_PASSPHRASE secret is missing" >&2
+            exit 1
+          fi
 
-      - name: Build and deploy
-        env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          # The BC signer expects the ASCII-armored private key
+          # in the MAVEN_GPG_KEY environment variable.
+          {
+            echo 'MAVEN_GPG_KEY<<EOF_GPG_KEY'
+            printf '%s' "$GPG_PRIVATE_KEY_B64" | base64 --decode
+            echo
+            echo 'EOF_GPG_KEY'
+          } >> "$GITHUB_ENV"
+
+      - name: Validate Maven Central credentials
         run: |
           set -euo pipefail
-          # Ensure gpg uses loopback pinentry and passphrase is supplied to mvn
-          export GPG_TTY=$(tty) || true
-          mvn -B -DskipTests -Dgpg.passphrase="$GPG_PASSPHRASE" -Dgpg.keyname="$GPG_KEY_ID" deploy
+
+          if [ -z "${CENTRAL_USERNAME:-}" ]; then
+            echo "CENTRAL_USERNAME secret is missing" >&2
+            exit 1
+          fi
+
+          if [ -z "${CENTRAL_PASSWORD:-}" ]; then
+            echo "CENTRAL_PASSWORD secret is missing" >&2
+            exit 1
+          fi
+
+      - name: Validate release versions
+        env:
+          RELEASE_VERSION: ${{ inputs.releaseVersion }}
+          DEVELOPMENT_VERSION: ${{ inputs.developmentVersion }}
+        run: |
+          set -euo pipefail
+
+          CURRENT_VERSION="$(
+            mvn help:evaluate \
+              -Dexpression=project.version \
+              -q \
+              -DforceStdout
+          )"
+
+          echo "Current version:     $CURRENT_VERSION"
+          echo "Release version:     $RELEASE_VERSION"
+          echo "Development version: $DEVELOPMENT_VERSION"
+
+          EXPECTED_CURRENT_VERSION="${RELEASE_VERSION}-SNAPSHOT"
+
+          if [ "$CURRENT_VERSION" != "$EXPECTED_CURRENT_VERSION" ]; then
+            echo >&2
+            echo "Expected current project version:" >&2
+            echo "  $EXPECTED_CURRENT_VERSION" >&2
+            echo >&2
+            echo "But found:" >&2
+            echo "  $CURRENT_VERSION" >&2
+            exit 1
+          fi
+
+          case "$RELEASE_VERSION" in
+            *-SNAPSHOT)
+              echo "Release version must not contain -SNAPSHOT" >&2
+              exit 1
+              ;;
+          esac
+
+          case "$DEVELOPMENT_VERSION" in
+            *-SNAPSHOT)
+              ;;
+            *)
+              echo "Development version must end with -SNAPSHOT" >&2
+              exit 1
+              ;;
+          esac
+
+          if git ls-remote \
+              --exit-code \
+              --tags origin \
+              "refs/tags/v${RELEASE_VERSION}" \
+              >/dev/null 2>&1; then
+
+            echo "Tag v${RELEASE_VERSION} already exists" >&2
+            exit 1
+          fi
+
+      - name: Prepare Maven release
+        env:
+          RELEASE_VERSION: ${{ inputs.releaseVersion }}
+          DEVELOPMENT_VERSION: ${{ inputs.developmentVersion }}
+        run: |
+          set -euo pipefail
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            release:clean \
+            release:prepare \
+            -DreleaseVersion="$RELEASE_VERSION" \
+            -DdevelopmentVersion="$DEVELOPMENT_VERSION" \
+            -Dtag="v$RELEASE_VERSION" \
+            -Darguments="-DskipTests=true -DskipITs=true"
+
+      - name: Perform Maven release
+        run: |
+          set -euo pipefail
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            release:perform \
+            -Darguments="-DskipTests=true -DskipITs=true"
